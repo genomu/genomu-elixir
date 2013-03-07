@@ -65,12 +65,18 @@ defmodule Genomu.Client.Channel do
     case rest do
       "" -> response = value
       _ ->
-        clock = rest
+        {clock, rest} = MsgPack.unpack(rest)
+        {txn, ""} = MsgPack.unpack(rest)
         response =
-        if opts[:version] do
-          {value, clock}
-        else
-          value
+        cond do
+          (opts[:version] || false) and (opts[:txn] || false) ->
+            {value, clock, txn}
+          opts[:version] ->
+            {value, clock}
+          opts[:txn] ->
+            {value, txn}
+          true ->
+            value
         end
     end
     :gen_server.reply(from, response)
