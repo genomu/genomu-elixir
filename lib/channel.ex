@@ -29,24 +29,24 @@ defmodule Genomu.Client.Channel do
     :gen_server.cast(server, {:data, data})
   end
 
-  def get(server, key, op, options // []) do
-    :gen_server.call(server, {:send, key, op, @get_value, options})
+  def get(server, addr, op, options // []) do
+    :gen_server.call(server, {:send, addr, op, @get_value, options})
   end
 
-  def set(server, key, op, options // []) do
-    :gen_server.call(server, {:send, key, op, @set_value, options})
+  def set(server, addr, op, options // []) do
+    :gen_server.call(server, {:send, addr, op, @set_value, options})
   end
 
-  def apply(server, key, op, options // []) do
-    :gen_server.call(server, {:send, key, op, @apply_value, options})
+  def apply(server, addr, op, options // []) do
+    :gen_server.call(server, {:send, addr, op, @apply_value, options})
   end
 
   def commit(server) do
     :gen_server.call(server, :commit)
   end
 
-  def handle_call({:send, key, op, type, options}, from, State[connection: c, channel: ch] = state) do
-    Conn.send(c, ch <> MsgPack.pack(key) <> type <> op)
+  def handle_call({:send, addr, op, type, options}, from, State[connection: c, channel: ch] = state) do
+    Conn.send(c, ch <> encode_addr(addr) <> type <> op)
     {:noreply, state.req_options(options).reply_to(from)}
   end
 
@@ -75,6 +75,13 @@ defmodule Genomu.Client.Channel do
     end
     :gen_server.reply(from, response)
     {:noreply, state}
+  end
+
+  defp encode_addr(key) when is_list(key) do
+    MsgPack.pack(key)
+  end
+  defp encode_addr({key, rev}) do
+    MsgPack.pack(MsgPack.Map.from_list([{0, [key, rev]}]))
   end
 
 end
