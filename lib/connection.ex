@@ -47,13 +47,13 @@ defmodule Genomu.Client.Connection do
   end
 
   def handle_info({:tcp, socket, data}, State[socket: socket, channels: channels] = state) do
-      {channel, rest} = MsgPack.next(data)
-      case :ets.lookup(channels, channel) do
-        [] -> :discard
-        [{_, pid}] ->
-          Genomu.Client.Channel.data(pid, rest)
-      end
-      {:noreply,state}
+    {channel, rest} = MsgPack.next(data)
+    case :ets.lookup(channels, channel) do
+      [] -> :discard
+      [{_, pid}] ->
+        Genomu.Client.Channel.data(pid, rest)
+    end
+    {:noreply,state}
   end
 
   def handle_info({:tcp_closed, socket}, State[socket: socket] = state) do
