@@ -57,7 +57,7 @@ defmodule Genomu.Client.Connection do
   end
 
   def handle_info({:tcp_closed, socket}, State[socket: socket] = state) do
-    {:stop, :normal, socket}
+    {:stop, :normal, state}
   end
 
 
