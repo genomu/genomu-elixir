@@ -42,7 +42,9 @@ defmodule Genomu.Client.Channel do
   end
 
   def commit(server) do
-    :gen_server.call(server, :commit)
+    result = :gen_server.call(server, :commit)
+    :gen_server.cast(self, :stop)
+    result
   end
 
   def handle_call({:send, addr, op, type, options}, from, State[connection: c, channel: ch] = state) do
@@ -81,6 +83,10 @@ defmodule Genomu.Client.Channel do
     end
     :gen_server.reply(from, response)
     {:noreply, state}
+  end
+
+  def handle_cast(:stop, state) do
+    {:stop, :normal, state}
   end
 
   defp encode_addr(key) when is_list(key) do
