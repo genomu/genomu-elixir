@@ -9,7 +9,6 @@ defmodule Genomu.Client.Connection do
 
   @doc false
   def init(options) do
-    :erlang.process_flag(:trap_exit, true)
     channels = :ets.new(__MODULE__.Channels, [:ordered_set])
     state = State.new(options).channels(channels)
     :gen_server.cast(self, :connect)

@@ -43,7 +43,7 @@ defmodule Genomu.Client.Channel do
 
   def commit(server) do
     result = :gen_server.call(server, :commit)
-    :gen_server.cast(self, :stop)
+    :gen_server.cast(server, :stop)
     result
   end
 

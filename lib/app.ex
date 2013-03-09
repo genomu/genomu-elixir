@@ -21,7 +21,7 @@ defmodule Genomu.Client.Sup do
     end
 
     defp tree do
-      [worker(Genomu.Client.Connection, [])]
+      [worker(Genomu.Client.Connection, [], restart: :transient)]
     end
   end
 
@@ -37,7 +37,7 @@ defmodule Genomu.Client.Sup do
     end
 
     defp tree do
-      [worker(Genomu.Client.Channel, [])]
+      [worker(Genomu.Client.Channel, [], restart: :transient)]
     end
   end
 
