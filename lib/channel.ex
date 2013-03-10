@@ -22,6 +22,7 @@ defmodule Genomu.Client.Channel do
   @set_value MsgPack.pack(1)
   @apply_value MsgPack.pack(2)
   @true_value MsgPack.pack(true)
+  @false_value MsgPack.pack(false)
 
   alias Genomu.Client.Connection, as: Conn
 
@@ -47,6 +48,12 @@ defmodule Genomu.Client.Channel do
     result
   end
 
+  def discard(server) do
+    result = :gen_server.call(server, :discard)
+    :gen_server.cast(server, :stop)
+    result
+  end
+
   def handle_call({:send, addr, op, type, options}, from, State[connection: c, channel: ch] = state) do
     Conn.send(c, ch <> encode_addr(addr) <> type <> op)
     {:noreply, state.req_options(options).reply_to(from)}
@@ -54,6 +61,11 @@ defmodule Genomu.Client.Channel do
 
   def handle_call(:commit, from, State[connection: c, channel: ch] = state) do
     Conn.send(c, ch <> @true_value)
+    {:noreply, state.reply_to(from)}
+  end
+
+  def handle_call(:discard, from, State[connection: c, channel: ch] = state) do
+    Conn.send(c, ch <> @false_value)
     {:noreply, state.reply_to(from)}
   end
 
