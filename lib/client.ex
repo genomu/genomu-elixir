@@ -10,8 +10,8 @@ defmodule Genomu.Client do
     :supervisor.start_child(Genomu.Client.Sup.Connections, [options])
   end
 
-  def begin(conn, _options // []) do
-    Genomu.Client.Connection.start_channel(conn)
+  def begin(conn, options // []) do
+    Genomu.Client.Connection.start_channel(conn, options)
   end
 
   def transaction(conn, f, options // []) when is_function(f, 1) do
@@ -21,14 +21,21 @@ defmodule Genomu.Client do
       :ok = commit(ch)
       result
     catch _, _ ->
-      # TODO: rollback
-      :ok
+      discard(ch)
+      :error
     end
   end
 
   defmacro execute(conn, ch, [do: body]) do
     quote do
       Genomu.Client.transaction(unquote(conn), fn(unquote(ch)) -> unquote(body) end)
+    end
+  end
+  defmacro execute(conn, ch, options) do
+    body = options[:do]
+    options = Keyword.delete(options, :do)
+    quote do
+      Genomu.Client.transaction(unquote(conn), fn(unquote(ch)) -> unquote(body) end, unquote(options))
     end
   end
 
