@@ -1,3 +1,5 @@
+defexception Genomu.Client.TimeoutException, message: "Timeout occured"
+
 defmodule Genomu.Client do
 
   defmacro __using__(_) do
@@ -20,9 +22,9 @@ defmodule Genomu.Client do
       result = f.(ch)
       :ok = commit(ch)
       result
-    catch _, _ ->
-      discard(ch)
-      :error
+    catch _, e ->
+      if Process.alive?(ch), do: discard(ch)
+      {:error, e}
     end
   end
 

@@ -23,6 +23,7 @@ defmodule Genomu.Client.Channel do
   @apply_value MsgPack.pack(2)
   @true_value MsgPack.pack(true)
   @false_value MsgPack.pack(false)
+  @nil_value MsgPack.pack(nil)
 
   alias Genomu.Client.Connection, as: Conn
 
@@ -31,21 +32,33 @@ defmodule Genomu.Client.Channel do
   end
 
   def get(server, addr, op, options // []) do
-    :gen_server.call(server, {:send, addr, op, @get_value, options})
+    case :gen_server.call(server, {:send, addr, op, @get_value, options}) do
+      :timeout -> raise Genomu.Client.TimeoutException
+      result -> result
+    end
   end
 
   def set(server, addr, op, options // []) do
-    :gen_server.call(server, {:send, addr, op, @set_value, options})
+    case :gen_server.call(server, {:send, addr, op, @set_value, options}) do
+      :timeout -> raise Genomu.Client.TimeoutException
+      result -> result
+    end
   end
 
   def apply(server, addr, op, options // []) do
-    :gen_server.call(server, {:send, addr, op, @apply_value, options})
+    case :gen_server.call(server, {:send, addr, op, @apply_value, options}) do
+      :timeout -> raise Genomu.Client.TimeoutException
+      result -> result
+    end
   end
 
   def commit(server) do
     result = :gen_server.call(server, :commit)
     :gen_server.cast(server, :stop)
-    result
+    case result do
+      :timeout -> raise Genomu.Client.TimeoutException
+      result -> result
+    end
   end
 
   def discard(server) do
@@ -71,6 +84,12 @@ defmodule Genomu.Client.Channel do
 
   def handle_cast({:data, @true_value}, State[reply_to: from] = state) do
     :gen_server.reply(from, :ok)
+    {:noreply, state}
+  end
+
+  def handle_cast({:data, @nil_value}, State[reply_to: from] = state) do
+    :gen_server.reply(from, :timeout)
+    :gen_server.cast(self, :stop)
     {:noreply, state}
   end
 
