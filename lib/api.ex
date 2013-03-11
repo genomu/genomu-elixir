@@ -5,7 +5,7 @@ defmodule Genomu.API do
   lc file inlist Path.wildcard(Path.join(modules_dir, "*.json")) do
     module = :jsx.to_term(File.read!(file), labels: :atom)
 
-    ops = lc {_name, operation} inlist module[:operations] do
+    ops = lc operation inlist module[:operations] do
       doc = if operation[:doc] == :null, do: nil, else: operation[:doc]
       if operation[:args] == 0 do
         args = []
