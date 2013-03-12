@@ -16,6 +16,10 @@ defmodule Genomu.Client do
     Genomu.Client.Connection.start_channel(conn, options)
   end
 
+  def watch(conn, fun, subscriptions) when is_list(subscriptions) do
+    Genomu.Client.Connection.start_watcher(conn, fun, subscriptions)
+  end
+
   def transaction(conn, f, options // []) when is_function(f, 1) do
     {:ok, ch} = begin(conn, options)
     try do

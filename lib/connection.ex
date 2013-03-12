@@ -19,6 +19,10 @@ defmodule Genomu.Client.Connection do
     :gen_server.call(server, {:start_channel, options})
   end
 
+  def start_watcher(server, fun, subscriptions) do
+    :gen_server.call(server, {:start_watcher, fun, subscriptions})
+  end
+
   def send(server, binary) do
     :gen_server.cast(server, {:send, binary})
   end
@@ -32,6 +36,18 @@ defmodule Genomu.Client.Connection do
     :ets.insert(channels, [{pid, channel},{channel, pid}])
     {:reply, {:ok, pid}, state}
   end
+
+  def handle_call({:start_watcher, fun, subscriptions}, _from, State[socket: socket, next_channel: ch, channels: channels] = state) do
+    channel = MsgPack.pack(ch)
+    subscriptions = MsgPack.pack(subscriptions)
+    :gen_tcp.send(socket, channel <> subscriptions)
+    state = state.update_next_channel(&1 + 1)
+    ref = make_ref
+    {:ok, pid} = Genomu.Client.Watcher.start(connection: self, channel: channel, fun: fun, ref: ref)
+    :ets.insert(channels, [{pid, channel},{channel, pid}])
+    {:reply, {:ok, pid, ref}, state}
+  end
+
 
   def handle_cast({:send, binary}, State[socket: socket] = state) do
     :gen_tcp.send(socket, binary)
