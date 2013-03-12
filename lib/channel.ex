@@ -21,6 +21,8 @@ defmodule Genomu.Client.Channel do
   @get_value MsgPack.pack(0)
   @set_value MsgPack.pack(1)
   @apply_value MsgPack.pack(2)
+  @operation_value MsgPack.pack(3)
+
   @true_value MsgPack.pack(true)
   @false_value MsgPack.pack(false)
   @nil_value MsgPack.pack(nil)
@@ -49,6 +51,13 @@ defmodule Genomu.Client.Channel do
     case :gen_server.call(server, {:send, addr, op, @apply_value, options}) do
       :timeout -> raise Genomu.Client.TimeoutException
       result -> result
+    end
+  end
+
+  def operation(server, addr, options // []) do
+    case :gen_server.call(server, {:send, addr, "", @operation_value, options}) do
+      :timeout -> raise Genomu.Client.TimeoutException
+      result -> Genomu.API.decode(result)
     end
   end
 

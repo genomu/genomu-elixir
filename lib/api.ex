@@ -13,6 +13,13 @@ defmodule Genomu.API do
         args = Enum.map(1..operation[:args], fn(n) -> (quote do: var!(unquote(:"arg_#{n}"))) end)
       end
       name = binary_to_atom(operation[:name])
+      def decode(<< unquote_splicing(binary_to_list(MsgPack.pack(module[:id]) <>
+                                                    MsgPack.pack(operation[:id]))),
+                    arg :: binary >>) do
+        { arg, _ } = MsgPack.unpack(arg)
+        unless is_list(arg), do: arg = [arg]
+        { Module.concat([__MODULE__, String.capitalize(unquote(module[:name]))]), unquote(name), arg }
+      end
       quote do
         @doc unquote(doc)
         def unquote(name)(unquote_splicing(args)) do
@@ -26,13 +33,14 @@ defmodule Genomu.API do
         end
       end
     end
-    
+
     quoted = quote do
                 @moduledoc unquote(module[:doc])
                 unquote_splicing(ops)
              end
 
     Module.create Module.concat([__MODULE__, String.capitalize(module[:name])]), quoted
-    
   end
+
+  def decode(_), do: nil
 end
