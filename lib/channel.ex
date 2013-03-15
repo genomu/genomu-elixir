@@ -26,6 +26,8 @@ defmodule Genomu.Client.Channel do
   @true_value MsgPack.pack(true)
   @false_value MsgPack.pack(false)
   @nil_value MsgPack.pack(nil)
+  @timeout_value @nil_value <> MsgPack.pack(1)
+  @abort_value @nil_value <> MsgPack.pack(0)
 
   alias Genomu.Client.Connection, as: Conn
 
@@ -44,6 +46,7 @@ defmodule Genomu.Client.Channel do
     end
     case :gen_server.call(server, {:send, addr, op, @get_value, options}) do
       :timeout -> raise Genomu.Client.TimeoutException
+      :abort -> raise Genomu.Client.AbortException
       result -> result
     end
   end
@@ -51,6 +54,7 @@ defmodule Genomu.Client.Channel do
   def set(server, addr, op, options // []) do
     case :gen_server.call(server, {:send, addr, op, @set_value, options}) do
       :timeout -> raise Genomu.Client.TimeoutException
+      :abort -> raise Genomu.Client.AbortException
       result -> result
     end
   end
@@ -58,6 +62,7 @@ defmodule Genomu.Client.Channel do
   def apply(server, addr, op, options // []) do
     case :gen_server.call(server, {:send, addr, op, @apply_value, options}) do
       :timeout -> raise Genomu.Client.TimeoutException
+      :abort -> raise Genomu.Client.AbortException
       result -> result
     end
   end
@@ -65,6 +70,7 @@ defmodule Genomu.Client.Channel do
   def operation(server, addr, options // []) do
     case :gen_server.call(server, {:send, addr, "", @operation_value, options}) do
       :timeout -> raise Genomu.Client.TimeoutException
+      :abort -> raise Genomu.Client.AbortException
       {result, v} -> {Genomu.API.decode(result), v}
       {result, v1, v2} -> {Genomu.API.decode(result), v1, v2}
       result -> Genomu.API.decode(result)
@@ -76,6 +82,7 @@ defmodule Genomu.Client.Channel do
     :gen_server.cast(server, :stop)
     case result do
       :timeout -> raise Genomu.Client.TimeoutException
+      :abort -> raise Genomu.Client.AbortException
       result -> result
     end
   end
@@ -101,14 +108,26 @@ defmodule Genomu.Client.Channel do
     {:noreply, state.reply_to(from)}
   end
 
-  def handle_cast({:data, @true_value}, State[reply_to: from] = state) do
-    :gen_server.reply(from, :ok)
+  def handle_cast({:data, @abort_value}, State[reply_to: from] = state) do
+    :gen_server.reply(from, :abort)
     {:noreply, state}
   end
 
+  def handle_cast({:data, @timeout_value}, State[reply_to: from] = state) do
+    :gen_server.reply(from, :timeout)
+    :gen_server.cast(self, :stop)
+    {:noreply, state}
+  end
+
+  # This clause will be soon deprecated
   def handle_cast({:data, @nil_value}, State[reply_to: from] = state) do
     :gen_server.reply(from, :timeout)
     :gen_server.cast(self, :stop)
+    {:noreply, state}
+  end
+
+  def handle_cast({:data, @true_value}, State[reply_to: from] = state) do
+    :gen_server.reply(from, :ok)
     {:noreply, state}
   end
 

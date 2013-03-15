@@ -1,4 +1,5 @@
 defexception Genomu.Client.TimeoutException, message: "Timeout occured"
+defexception Genomu.Client.AbortException, message: "Operation was aborted"
 
 defmodule Genomu.Client do
 
