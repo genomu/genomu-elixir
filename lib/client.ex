@@ -31,7 +31,7 @@ defmodule Genomu.Client do
     {:ok, ch} = begin(conn, options)
     try do
       result = f.(ch)
-      :ok = commit(ch)
+      if Process.alive?(ch), do: :ok = commit(ch)
       result
     rescue e ->
       if Process.alive?(ch), do: discard(ch)

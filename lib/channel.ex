@@ -79,7 +79,7 @@ defmodule Genomu.Client.Channel do
 
   def commit(server) do
     result = :gen_server.call(server, :commit)
-    :gen_server.cast(server, :stop)
+    stop(server)
     case result do
       :timeout -> raise Genomu.Client.TimeoutException
       :abort -> raise Genomu.Client.AbortException
@@ -89,8 +89,15 @@ defmodule Genomu.Client.Channel do
 
   def discard(server) do
     result = :gen_server.call(server, :discard)
-    :gen_server.cast(server, :stop)
+    stop(server)
     result
+  end
+
+  def stop(server) do
+    try do
+      :gen_server.call(server, :stop)
+    catch :exit, _ -> :ok
+    end
   end
 
   def handle_call({:send, addr, op, type, options}, from, State[connection: c, channel: ch] = state) do
@@ -106,6 +113,10 @@ defmodule Genomu.Client.Channel do
   def handle_call(:discard, from, State[connection: c, channel: ch] = state) do
     Conn.send(c, ch <> @false_value)
     {:noreply, state.reply_to(from)}
+  end
+
+  def handle_call(:stop, from, state) do
+    {:stop, :normal, :ok, state}
   end
 
   def handle_cast({:data, @abort_value}, State[reply_to: from] = state) do
