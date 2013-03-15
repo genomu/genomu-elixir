@@ -169,7 +169,7 @@ defmodule Genomu.Client.Channel do
     MsgPack.pack(key)
   end
   defp encode_addr({key, rev}) do
-    MsgPack.pack(MsgPack.Map.from_list([{0, [key, rev]}]))
+    MsgPack.pack(MsgPack.Map.from_list([{"vsn", [key, rev]}]))
   end
 
 end
