@@ -67,16 +67,6 @@ defmodule Genomu.Client.Channel do
     end
   end
 
-  def operation(server, addr, options // []) do
-    case :gen_server.call(server, {:send, addr, "", @operation_value, options}) do
-      :timeout -> raise Genomu.Client.TimeoutException
-      :abort -> raise Genomu.Client.AbortException
-      {result, v} -> {Genomu.API.decode(result), v}
-      {result, v1, v2} -> {Genomu.API.decode(result), v1, v2}
-      result -> Genomu.API.decode(result)
-    end
-  end
-
   def commit(server) do
     result = :gen_server.call(server, :commit)
     :gen_server.cast(server, :stop)

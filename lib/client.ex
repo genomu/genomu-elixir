@@ -59,7 +59,5 @@ defmodule Genomu.Client do
                set(channel, addr, operation),
                apply(channel, addr, operation, options),
                apply(channel, addr, operation),
-               operation(channel, addr),
-               operation(channel, addr, options),
                commit(channel), discard(channel)], to: Genomu.Client.Channel
 end
