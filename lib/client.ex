@@ -17,7 +17,13 @@ defmodule Genomu.Client do
     Genomu.Client.Connection.start_channel(conn, options)
   end
 
+  def watch(conn, fun, subscription) when is_binary(subscription) do
+    watch(conn, fun, [subscription])
+  end
   def watch(conn, fun, subscriptions) when is_list(subscriptions) do
+    subscriptions = Enum.map(subscriptions, fn(s) when is_binary(s) -> [s]
+                                              (s) -> s
+                                            end)
     Genomu.Client.Connection.start_watcher(conn, fun, subscriptions)
   end
 
