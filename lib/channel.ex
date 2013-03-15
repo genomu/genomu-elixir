@@ -119,11 +119,12 @@ defmodule Genomu.Client.Channel do
       _ ->
         {clock, rest} = MsgPack.unpack(rest)
         {txn, ""} = MsgPack.unpack(rest)
+        version = opts[:vsn]
         response =
         cond do
-          (opts[:version] || false) and (opts[:txn] || false) ->
+          (version || false) and (opts[:txn] || false) ->
             {value, clock, txn}
-          opts[:version] ->
+          version ->
             {value, clock}
           opts[:txn] ->
             {value, txn}
