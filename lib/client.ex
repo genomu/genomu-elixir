@@ -46,7 +46,8 @@ defmodule Genomu.Client do
   end
 
   defdelegate [get(channel, addr, operation, options),
-               get(channel, addr, operation),
+               get(channel, addr, operation_or_options),
+               get(channel, addr),
                set(channel, addr, operation, options),
                set(channel, addr, operation),
                apply(channel, addr, operation, options),

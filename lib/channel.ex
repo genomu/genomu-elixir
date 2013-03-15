@@ -33,7 +33,15 @@ defmodule Genomu.Client.Channel do
     :gen_server.cast(server, {:data, data})
   end
 
+  def get(server, addr) do
+    get(server, addr, Genomu.API.Core.identity)
+  end
+
   def get(server, addr, op, options // []) do
+    if is_list(op) do
+      options = op
+      op = Genomu.API.Core.identity
+    end
     case :gen_server.call(server, {:send, addr, op, @get_value, options}) do
       :timeout -> raise Genomu.Client.TimeoutException
       result -> result
@@ -131,6 +139,12 @@ defmodule Genomu.Client.Channel do
     {:stop, :normal, state}
   end
 
+  defp encode_addr(key) when is_binary(key) do
+    encode_addr([key])
+  end
+  defp encode_addr({key, rev}) when is_binary(key) do
+    encode_addr({[key], rev})
+  end
   defp encode_addr(key) when is_list(key) do
     MsgPack.pack(key)
   end
