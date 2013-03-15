@@ -21,7 +21,6 @@ defmodule Genomu.Client.Channel do
   @get_value MsgPack.pack(0)
   @set_value MsgPack.pack(1)
   @apply_value MsgPack.pack(2)
-  @operation_value MsgPack.pack(3)
 
   @true_value MsgPack.pack(true)
   @false_value MsgPack.pack(false)
