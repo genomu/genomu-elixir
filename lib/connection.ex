@@ -92,5 +92,8 @@ defmodule Genomu.Client.Connection do
   defp encode_options([{:vnode, :primary}|t], options) do
     encode_options(t, [{2, 1}|options])
   end
+  defp encode_options([{:timeout, timeout}|t], options) do
+    encode_options(t, [{3, timeout}|options])
+  end
 
 end
