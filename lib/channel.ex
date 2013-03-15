@@ -104,7 +104,7 @@ defmodule Genomu.Client.Channel do
     {:noreply, state.reply_to(from)}
   end
 
-  def handle_call(:stop, from, state) do
+  def handle_call(:stop, _from, state) do
     {:stop, :normal, :ok, state}
   end
 
