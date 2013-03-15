@@ -26,9 +26,9 @@ defmodule Genomu.Client do
       result = f.(ch)
       :ok = commit(ch)
       result
-    catch _, e ->
+    rescue e ->
       if Process.alive?(ch), do: discard(ch)
-      {:error, e}
+      raise e
     end
   end
 
