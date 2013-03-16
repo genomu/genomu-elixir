@@ -39,17 +39,28 @@ defmodule Genomu.Client do
     end
   end
 
-  defmacro execute(conn, ch, [do: body]) do
-    quote do
-      Genomu.Client.transaction(unquote(conn), fn(unquote(ch)) -> unquote(body) end)
-    end
-  end
-  defmacro execute(conn, ch, options) do
+  defp __transaction__(conn, ch, options) do
     body = options[:do]
     options = Keyword.delete(options, :do)
+    q =
     quote do
-      Genomu.Client.transaction(unquote(conn), fn(unquote(ch)) -> unquote(body) end, unquote(options))
+      {:ok, unquote(ch)} = Genomu.Client.begin(unquote(conn), unquote(options))
+      try do
+        result = unquote(body)
+        if Process.alive?(unquote(ch)), do: :ok = Genomu.Client.commit(unquote(ch))
+        result
+      rescue e ->
+        if Process.alive?(unquote(ch)), do: Genomu.Client.discard(unquote(ch))
+        raise e
+      end
     end
+  end
+
+  defmacro execute(conn, ch, [do: _] = options) do
+    __transaction__(conn, ch, options)
+  end
+  defmacro execute(conn, ch, options) do
+    __transaction__(conn, ch, options)
   end
 
   defdelegate [get(channel, addr, operation, options),
