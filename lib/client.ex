@@ -42,7 +42,6 @@ defmodule Genomu.Client do
   defp __transaction__(conn, ch, options) do
     body = options[:do]
     options = Keyword.delete(options, :do)
-    q =
     quote do
       {:ok, unquote(ch)} = Genomu.Client.begin(unquote(conn), unquote(options))
       try do
