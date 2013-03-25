@@ -21,7 +21,7 @@ defmodule Genomu.Client.Sup do
     end
 
     defp tree do
-      [worker(Genomu.Client.Connection, [], restart: :transient)]
+      [worker(Genomu.Client.Connection, [], restart: :temporary)]
     end
   end
 
