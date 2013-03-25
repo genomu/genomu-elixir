@@ -5,7 +5,8 @@ defmodule Genomu.Client.Connection do
     :gen_server.start_link(__MODULE__, options, [])
   end
 
-  defrecord State, host: nil, port: 9101, next_channel: 0, socket: nil, channels: nil
+
+  defrecord State, host: nil, port: 9101, next_channel: 0, socket: nil, channels: nil, retries: 10, left: 10, reconnect_timeout: 1000
 
   @doc false
   def init(options) do
@@ -54,11 +55,8 @@ defmodule Genomu.Client.Connection do
     {:noreply, state}
   end
 
-  def handle_cast(:connect, State[host: host, port: port] = state) do
-    {:ok, socket} = :gen_tcp.connect(host |> to_char_list, port,
-                                     [:binary, {:packet, 4}, {:active, true}, {:nodelay, true}])
-    state = state.socket(socket)
-    {:noreply, state}
+  def handle_cast(:connect, state) do
+    connect(state)
   end
 
   def handle_info({:tcp, socket, data}, State[socket: socket, channels: channels] = state) do
@@ -73,6 +71,26 @@ defmodule Genomu.Client.Connection do
 
   def handle_info({:tcp_closed, socket}, State[socket: socket] = state) do
     {:stop, :normal, state}
+  end
+
+  def handle_info(:timeout, State[socket: nil] = state) do
+    connect(state)
+  end
+
+  defp connect(State[left: 0] = state), do: {:stop, :normal, state}
+  defp connect(State[host: host, port: port, 
+                     retries: retries, left: left, reconnect_timeout: timeout] = state) do
+    connected = :gen_tcp.connect(host |> to_char_list, port,
+       [:binary, {:packet, 4}, {:active, true}, {:nodelay, true}])
+    case connected do
+      {:ok, socket} -> 
+         state = state.socket(socket)
+         state = state.left(retries)
+         {:noreply, state}
+      {:error, :econnrefused} -> 
+         state = state.left(left - 1)
+         {:noreply, state, timeout}
+    end
   end
 
     defmacro n, do: 0
