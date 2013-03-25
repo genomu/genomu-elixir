@@ -28,10 +28,12 @@ defmodule Genomu.Client do
   end
 
   def transaction(conn, f, options // []) when is_function(f, 1) do
+    auto_commit = Keyword.get(options, :commit, true)
+    options = Keyword.delete(options, :commit)
     {:ok, ch} = begin(conn, options)
     try do
       result = f.(ch)
-      if Process.alive?(ch), do: :ok = commit(ch)
+      if auto_commit and Process.alive?(ch), do: :ok = commit(ch)
       result
     rescue e ->
       if Process.alive?(ch), do: discard(ch)
